@@ -99,6 +99,23 @@ function ServiceAccount_(email){
   
   
   
+  
+  LibDrive.getFoldersInFolder = function(folderId){
+    var token = super_.getToken();
+    var query = "'"+folderId+"' in parents and mimeType == 'application/vnd.google-apps.folder'"; 
+    return driveList(query, token);
+  }
+  
+  
+  
+  LibDrive.getFoldersAndFilesInFolder = function(folderId){
+    var token = super_.getToken();
+    var query = "'"+folderId+"' in parents"; 
+    return driveList(query, token);
+  }
+  
+  
+  
   function driveList(query){
     var token = super_.getToken();
     var filesArray = [];
