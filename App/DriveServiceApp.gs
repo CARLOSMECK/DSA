@@ -8,6 +8,11 @@ function START_TRANSFER(){
 }
 
 
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('Index')
+  .setSandboxMode(HtmlService.SandboxMode.IFRAME);
+}
+
 
 
 
@@ -32,11 +37,11 @@ function GetUsersFromGroup(PushOrTransfer) {
         groupMemberEmailAddresses.push(groupMembers[i].email)
         if(PushOrTransfer == 'PUSH')
         {
-        PushFolderToRoot(groupMemberEmailAddresses);  
+          PushFolderToRoot(groupMemberEmailAddresses);  
         }
         else
         {
-        StealOwnerShip(groupMemberEmailAddresses);  
+          StealOwnerShip(groupMemberEmailAddresses);  
         }
       }
       else if (groupMembers[i].type == 'GROUP') {
@@ -107,15 +112,30 @@ function StealOwnerShip(groupMemberEmailAddresses) {
       var fileId = objData.fileObjs[i].id;
       if (ownerEmail != "drive.service@appsdemo.se") {
         StealOwnerShipSlave1(ownerEmail, fileId);
-      }    
-    }       
+      }
+    }    
+    for(var i in objData.fileObjs){               
+      var ownerEmail = objData.fileObjs[i].Owner; 
+      var fileId = objData.fileObjs[i].id;
+      var mimeTypes = objData.fileObjs[i].mimeType;
+      Logger.log(mimeTypes);
+      if (mimeTypes == 'application/vnd.google-apps.folder') {
+        StealOwnerShipSlave0_1(ownerEmail, fileId);
+      }
+    }
   }
 }
 function StealOwnerShipSlave0(GMEA) {
   var ts = tokenService(GMEA);
   LibDrive.Init(ts);
   var dSA = LibDrive.ServiceAccount(GMEA);
-  return dSA.getFilesInFolder("0B5tng1JsgIgheXhtbThYaWRsZmc");
+  return dSA.getFoldersAndFilesInFolder("0B5tng1JsgIgheXhtbThYaWRsZmc");
+}
+function StealOwnerShipSlave0_1(GMEA) {
+  var ts = tokenService(GMEA);
+  LibDrive.Init(ts);
+  var dSA = LibDrive.ServiceAccount(GMEA);
+  return dSA.getFoldersInFolder("0B5tng1JsgIgheXhtbThYaWRsZmc");
 }
 function StealOwnerShipSlave1(ownerEmail, fileId) {
   var ts = tokenService(ownerEmail);
