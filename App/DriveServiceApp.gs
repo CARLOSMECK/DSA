@@ -19,7 +19,7 @@ function doGet() {
 // ***** Get Group Members ***** \\
 // ***** Get Group Members ***** \\
 // ***** Get Group Members ***** \\
-function GetUsersFromGroup(PushOrTransfer) {
+function GetUsersFromGroup(PushOrTransfer, fileId) {
   var rootGroup = 'share@appsdemo.se';
   var groupTreeUsers = [];
   var groups = [];
@@ -35,14 +35,22 @@ function GetUsersFromGroup(PushOrTransfer) {
         groupTreeUsers.push([groupName, groupMembers[i].email])   
         var groupMemberEmailAddresses = [];
         groupMemberEmailAddresses.push(groupMembers[i].email)
-        if(PushOrTransfer == 'PUSH')
+        if(fileId != undefined)
         {
-          PushFolderToRoot(groupMemberEmailAddresses);  
+          StealOwnerShip_SubFolder(groupMemberEmailAddresses, fileId);
+        }
+        else if(PushOrTransfer == 'PUSH')
+        {
+          PushFolderToRoot(groupMemberEmailAddresses);
+        }
+        else if(PushOrTransfer == 'TRANSFER')
+        {
+          StealOwnerShip(groupMemberEmailAddresses);
         }
         else
         {
-          StealOwnerShip(groupMemberEmailAddresses);  
-        }
+         Logger.log("Körde igenom IF-statements i 'GetUsersFromGroup' utan träff..")
+        }       
       }
       else if (groupMembers[i].type == 'GROUP') {
         groups.push(groupMembers[i].email)
@@ -99,9 +107,9 @@ function PushFolderToRootSlave0(GMEA) {
 
 
 
-// ***** Transfer Ownership ***** \\
-// ***** Transfer Ownership ***** \\
-// ***** Transfer Ownership ***** \\
+// ***** Transfer Rootfolder Files Ownership ***** \\
+// ***** Transfer Rootfolder Files Ownership ***** \\
+// ***** Transfer Rootfolder Files Ownership ***** \\
 function StealOwnerShip(groupMemberEmailAddresses) {
   for(var i=0; i<groupMemberEmailAddresses.length;i++) {
     var GMEA = groupMemberEmailAddresses[i];
@@ -110,18 +118,14 @@ function StealOwnerShip(groupMemberEmailAddresses) {
     for(var i in objData.fileObjs){               
       var ownerEmail = objData.fileObjs[i].Owner; 
       var fileId = objData.fileObjs[i].id;
+      var empty_var = "";
+      var mimeTypes = objData.fileObjs[i].mimeType; 
       if (ownerEmail != "drive.service@appsdemo.se") {
         StealOwnerShipSlave1(ownerEmail, fileId);
-      }
-    }    
-    for(var i in objData.fileObjs){               
-      var ownerEmail = objData.fileObjs[i].Owner; 
-      var fileId = objData.fileObjs[i].id;
-      var mimeTypes = objData.fileObjs[i].mimeType;
-      Logger.log(mimeTypes);
-      if (mimeTypes == 'application/vnd.google-apps.folder') {
-        StealOwnerShipSlave0_1(ownerEmail, fileId);
-      }
+      } 
+      else if (mimeTypes == 'application/vnd.google-apps.folder') {
+        GetUsersFromGroup(empty_var, fileId); 
+      }                                  
     }
   }
 }
@@ -131,21 +135,58 @@ function StealOwnerShipSlave0(GMEA) {
   var dSA = LibDrive.ServiceAccount(GMEA);
   return dSA.getFoldersAndFilesInFolder("0B5tng1JsgIgheXhtbThYaWRsZmc");
 }
-function StealOwnerShipSlave0_1(GMEA) {
-  var ts = tokenService(GMEA);
-  LibDrive.Init(ts);
-  var dSA = LibDrive.ServiceAccount(GMEA);
-  return dSA.getFoldersInFolder("0B5tng1JsgIgheXhtbThYaWRsZmc");
-}
 function StealOwnerShipSlave1(ownerEmail, fileId) {
   var ts = tokenService(ownerEmail);
   LibDrive.Init(ts);
   var dSA = LibDrive.ServiceAccount(ownerEmail);
   return dSA.transferFileToUser(fileId, "drive.service@appsdemo.se");
 }
-// ***** Transfer Ownership ***** \\
-// ***** Transfer Ownership ***** \\
-// ***** Transfer Ownership ***** \\
+// ***** Transfer Rootfolder Files Ownership ***** \\
+// ***** Transfer Rootfolder Files Ownership ***** \\
+// ***** Transfer Rootfolder Files Ownership ***** \\
+
+
+
+
+
+// ***** Transfer Subfolder Files Ownership ***** \\
+// ***** Transfer Subfolder Files Ownership ***** \\
+// ***** Transfer Subfolder Files Ownership ***** \\
+function StealOwnerShip_SubFolder(groupMemberEmailAddresses, subFolderId) { 
+  for(var i=0; i<groupMemberEmailAddresses.length;i++) {      
+    var GMEA = groupMemberEmailAddresses[i];
+    var objData = StealOwnerShip_SubFolderSlave0(GMEA, subFolderId); 
+    
+ for(var i in objData.fileObjs){               
+      var ownerEmail = objData.fileObjs[i].Owner; 
+      var fileId = objData.fileObjs[i].id;
+      var empty_var = "";
+      var mimeTypes = objData.fileObjs[i].mimeType; 
+      if (ownerEmail != "drive.service@appsdemo.se") {
+        StealOwnerShipSlave1(ownerEmail, fileId);
+      } 
+      else if (mimeTypes == 'application/vnd.google-apps.folder') {
+        GetUsersFromGroup(empty_var, fileId); 
+      }                                  
+    }
+  }
+}
+function StealOwnerShip_SubFolderSlave0(GMEA, subFolderId) {
+  var ts = tokenService(GMEA);
+  LibDrive.Init(ts);
+  var dSA = LibDrive.ServiceAccount(GMEA);
+  return dSA.getFoldersAndFilesInFolder(subFolderId); 
+}
+function StealOwnerShip_SubFolderSlave1(ownerEmail, fileId) {
+  var ts = tokenService(ownerEmail);
+  LibDrive.Init(ts);
+  var dSA = LibDrive.ServiceAccount(ownerEmail);
+  return dSA.transferFileToUser(fileId, "drive.service@appsdemo.se");
+}
+// ***** Transfer Subfolder Files Ownership ***** \\
+// ***** Transfer Subfolder Files Ownership ***** \\
+// ***** Transfer Subfolder Files Ownership ***** \\
+
 
 
 
