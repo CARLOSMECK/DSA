@@ -1,21 +1,21 @@
 /*
 * GAS library for generating user OAuth Tokens via Google service account.
-* @param {String} rLibKey The private_key from your service account JSON key
+* @param {String} rsaKey The private_key from your service account JSON key
 * @param {Array} Scopes An Array of scopes you want to authenticate
-* @param {String} LibEmail The service account Email
+* @param {String} saEmail The service account Email
 * @return {object} self for chaining
 */
-function init(rsaKey, Scopes, LibEmail){
-  return new LibService_(rsaKey,Scopes,LibEmail);
+function init(rsaKey, Scopes, saEmail){
+  return new saService_(rsaKey,Scopes,saEmail);
 }
 
 
-function LibService_(rsaKey, Scopes, LibEmail){
+function saService_(rsaKey, Scopes, saEmail){
 
   var self = this;
   var rsaKey_ = rsaKey;
   var Scopes_ = Scopes;
-  var LibEmail_ = LibEmail;
+  var saEmail_ = saEmail;
   var jwts_ ;
   var tokens_ = {};
   var expireTime_;
@@ -33,7 +33,7 @@ function LibService_(rsaKey, Scopes, LibEmail){
     throw 'You must provide atleast one scope';
   }
   
-  if (!LibEmail_) {
+  if (!saEmail_) {
     throw 'You must provide the service account email';
   }
   
@@ -155,14 +155,14 @@ function LibService_(rsaKey, Scopes, LibEmail){
     expireTime_ = exp;
     var claim = 
         {
-          "iss": LibEmail_,
+          "iss": saEmail_,
           "sub": subAccount,
           "scope": Scopes_.join(" "),
           "aud":"https://www.googleapis.com/oauth2/v3/token",
           "iat": now,
           "exp": exp
         };
-    if(subAccount === LibEmail_){
+    if(subAccount === saEmail_){
       delete claim.sub;
     }
     return claim;
