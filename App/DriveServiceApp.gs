@@ -1,200 +1,161 @@
-function START_PUSH(){
-  var PushOrTransfer = "PUSH";
-  GetUsersFromGroup(PushOrTransfer);
-}
-function START_TRANSFER(){
-  var PushOrTransfer = "TRANSFER";
-  GetUsersFromGroup(PushOrTransfer);
-}
+// Add the libraries:
+// MPlPXdVxNBhfaF3UVVEuMMMh00DPSBbB3 LibDrive 
+// MJ5317VIFJyKpi9HCkXOfS0MLm9v2IJHf LibOAuth
+//
+// Create a service account under your script's dev console project
+// Add the json Key to the script properties under "jsonKey"
+// Add the serive account clientId to your domain Admin console under
+//         `Manage API client access` with the scope:
+//   https://www.googleapis.com/auth/drive
+// Note: It may take 15 minutes to a few hours after adding the clientId 
+// to the admin console before the api project becomes authorized on your domain
+// The Error: There was an error requesting a Token from the OAuth server: unauthorized_client
+// means you need to wait a bit longer
 
-
-function doGet() {
-  return HtmlService.createHtmlOutputFromFile('Index')
-  .setSandboxMode(HtmlService.SandboxMode.IFRAME);
-}
-
-
-
-
-// ***** Get Group Members ***** \\
-// ***** Get Group Members ***** \\
-// ***** Get Group Members ***** \\
-function GetUsersFromGroup(PushOrTransfer, fileId) {
-  var rootGroup = 'share@appsdemo.se';
-  var groupTreeUsers = [];
-  var groups = [];
-  groups.push(rootGroup);
+//admin.fileshare@piedtancagroup.com
+//0B2XfBTL5aSGMRnRZeUFpNV8tU0U
+// test folder: 0B2XfBTL5aSGMZTNwTDlwT2JqNjg
+/*
+function trigger_GetDriveFiles(){
+var folder = DriveApp.getFolderById("0B2XfBTL5aSGMZTNwTDlwT2JqNjg");
+var filesJSObj = GetDriveFiles(folder);
   
-  while (groups.length > 0) {
-    var currentGroup = groups.pop();
-    var groupName = AdminDirectory.Groups.get(currentGroup).name;
-    var groupMembers = GetUsersFromGroupSlave0(currentGroup);
+  
+   for(var ownerEmail in filesJSObj){
+    if(filesJSObj.hasOwnProperty(ownerEmail)){
+    Logger.log(bulkFile(ownerEmail, filesJSObj[ownerEmail]));
+    } 
+  }
+}
+
+function GetDriveFiles(folder) {
+  var files = {};
+  var files2 = {}; 
+  var fileIt = folder.getFiles();
+  while (fileIt.hasNext()) {
+    var f = fileIt.next();
+    var owner = f.getOwner().getEmail();
+    var id = f.getId();
     
-    for (var i in groupMembers) {
-      if (groupMembers[i].type == 'USER') {
-        groupTreeUsers.push([groupName, groupMembers[i].email])   
-        var groupMemberEmailAddresses = [];
-        groupMemberEmailAddresses.push(groupMembers[i].email)
-        if(fileId != undefined)
-        {
-          StealOwnerShip_SubFolder(groupMemberEmailAddresses, fileId);
-        }
-        else if(PushOrTransfer == 'PUSH')
-        {
-          PushFolderToRoot(groupMemberEmailAddresses);
-        }
-        else if(PushOrTransfer == 'TRANSFER')
-        {
-          StealOwnerShip(groupMemberEmailAddresses);
-        }
-        else
-        {
-         Logger.log("Körde igenom IF-statements i 'GetUsersFromGroup' utan träff..")
-        }       
+    if (owner != "admin.fileshare@piedtancagroup.com"){
+      if (!files[owner]) {
+        files[owner] = [];
       }
-      else if (groupMembers[i].type == 'GROUP') {
-        groups.push(groupMembers[i].email)
-      }        
+      
+      // push the file to the owner's array
+      files[owner].push(id);
     }
-  }
-}
-function GetUsersFromGroupSlave0(group) {
-  var memberPageToken, memberPage;
-  var members = [];
-  do {
-    memberPage = AdminDirectory.Members.list(group, {
-      maxResults: 200,
-      pageToken: memberPageToken
-    });
-    var pageMembers = memberPage.members;
-    if (pageMembers) {
-      for (var j =0; j < pageMembers.length; j++) {
-        members.push(pageMembers[j]);
-      }
-    }
-    memberPageToken = memberPage.nextPageToken;
-  } while (memberPageToken);
-  return members;
-}
-// ***** Get Group Members ***** \\
-// ***** Get Group Members ***** \\
-// ***** Get Group Members ***** \\
-
-
-
-
-
-// ***** Push Folder To Root ***** \\
-// ***** Push Folder To Root ***** \\
-// ***** Push Folder To Root ***** \\
-function PushFolderToRoot(groupMemberEmailAddresses) {
-  for(var i=0; i<groupMemberEmailAddresses.length;i++) {
-    var GMEA = groupMemberEmailAddresses[i];
-    PushFolderToRootSlave0(GMEA);   
-  }
-}
-function PushFolderToRootSlave0(GMEA) {
-  var ts = tokenService(GMEA);
-  LibDrive.Init(ts);
-  var dSA = LibDrive.ServiceAccount(GMEA);
-  return dSA.pushFolderToRoot("0B5tng1JsgIgheXhtbThYaWRsZmc", GMEA); 
-}
-// ***** Push Folder To Root ***** \\
-// ***** Push Folder To Root ***** \\
-// ***** Push Folder To Root ***** \\
-
-
-
-
-
-// ***** Transfer Rootfolder Files Ownership ***** \\
-// ***** Transfer Rootfolder Files Ownership ***** \\
-// ***** Transfer Rootfolder Files Ownership ***** \\
-function StealOwnerShip(groupMemberEmailAddresses) {
-  for(var i=0; i<groupMemberEmailAddresses.length;i++) {
-    var GMEA = groupMemberEmailAddresses[i];
-    var objData = StealOwnerShipSlave0(GMEA); 
     
-    for(var i in objData.fileObjs){               
-      var ownerEmail = objData.fileObjs[i].Owner; 
-      var fileId = objData.fileObjs[i].id;
-      var empty_var = "";
-      var mimeTypes = objData.fileObjs[i].mimeType; 
-      if (ownerEmail != "drive.service@appsdemo.se") {
-        StealOwnerShipSlave1(ownerEmail, fileId);
-      } 
-      else if (mimeTypes == 'application/vnd.google-apps.folder') {
-        GetUsersFromGroup(empty_var, fileId); 
-      }                                  
+  }
+
+  // Get all the sub-folders and iterate
+  var folderIt = folder.getFolders();
+  while(folderIt.hasNext()) {
+    fs = GetDriveFiles(folderIt.next());
+    for (var i = 0; i < fs.length; i++) {
+      files[owner].push(id); 
     }
   }
+
+  return files;
 }
-function StealOwnerShipSlave0(GMEA) {
-  var ts = tokenService(GMEA);
-  LibDrive.Init(ts);
-  var dSA = LibDrive.ServiceAccount(GMEA);
-  return dSA.getFoldersAndFilesInFolder("0B5tng1JsgIgheXhtbThYaWRsZmc");
+*/
+
+function trigger_GetDriveFiles() {
+  var folder = DriveApp.getFolderById('0B2XfBTL5aSGMZTNwTDlwT2JqNjg');
+var filesJSObj = convertToObj(GetDriveFiles(folder));
+  
+    for(var i in filesJSObj){
+   // Logger.log(filesJSObj[i]) - Loggar File Id's i grupp
+    if(filesJSObj.hasOwnProperty(i)){
+    Logger.log(bulkFile(i, filesJSObj[i]));
+    }
+     
+   // bulkFile(filesJSObj[i]); - Inget hände
+  }
+  
+  
 }
-function StealOwnerShipSlave1(ownerEmail, fileId) {
+
+function GetDriveFiles(folder) {
+  var files = [];
+  var fileIt = folder.getFiles();
+  while (fileIt.hasNext()) {
+    var f = fileIt.next();
+    var owner = f.getOwner().getEmail();
+    var id = f.getId();
+    if (owner != "admin.fileshare@piedtancagroup.com"){
+      files.push({'id': id, 'owner': owner});
+    }
+  }
+  var folderIt = folder.getFolders();
+  while (folderIt.hasNext()) {
+    files = files.concat(GetDriveFiles(folderIt.next()));
+  }
+   
+  
+  return files;
+}
+
+ 
+
+function convertToObj(files) {
+  var filesObj = {};
+  for (var i = 0; i < files.length; i++) {
+    var owner = files[i].owner;
+    if (!filesObj[owner]) {
+      filesObj[owner] = [];
+    }
+    filesObj[owner].push(files[i].id);
+  }
+  return filesObj;
+}
+
+
+
+// ***** Bulk Test ***** \\
+// ***** Bulk Test ***** \\
+// ***** Bulk Test ***** \\
+function bulkFile(ownerEmail, fileIds) {
   var ts = tokenService(ownerEmail);
   LibDrive.Init(ts);
   var dSA = LibDrive.ServiceAccount(ownerEmail);
-  return dSA.transferFileToUser(fileId, "drive.service@appsdemo.se");
+ return dSA.batchPermissionChange(fileIds, "admin.fileshare@piedtancagroup.com"); //<-- This is the user that recieves the folder/file
 }
-// ***** Transfer Rootfolder Files Ownership ***** \\
-// ***** Transfer Rootfolder Files Ownership ***** \\
-// ***** Transfer Rootfolder Files Ownership ***** \\
+// ***** Bulk Test ***** \\
+// ***** Bulk Test ***** \\
+// ***** Bulk Test ***** \\
 
 
 
-
-
-// ***** Transfer Subfolder Files Ownership ***** \\
-// ***** Transfer Subfolder Files Ownership ***** \\
-// ***** Transfer Subfolder Files Ownership ***** \\
-function StealOwnerShip_SubFolder(groupMemberEmailAddresses, subFolderId) { 
-  for(var i=0; i<groupMemberEmailAddresses.length;i++) {      
-    var GMEA = groupMemberEmailAddresses[i];
-    var objData = StealOwnerShip_SubFolderSlave0(GMEA, subFolderId); 
-    
- for(var i in objData.fileObjs){               
-      var ownerEmail = objData.fileObjs[i].Owner; 
-      var fileId = objData.fileObjs[i].id;
-      var empty_var = "";
-      var mimeTypes = objData.fileObjs[i].mimeType; 
-      if (ownerEmail != "drive.service@appsdemo.se") {
-        StealOwnerShipSlave1(ownerEmail, fileId);
-      } 
-      else if (mimeTypes == 'application/vnd.google-apps.folder') {
-        GetUsersFromGroup(empty_var, fileId); 
-      }                                  
-    }
-  }
+function myFunction(){
+   Logger.log(getAllFoldersOfUser("andy.strandberg@boulebar.se"));
 }
-function StealOwnerShip_SubFolderSlave0(GMEA, subFolderId) {
-  var ts = tokenService(GMEA);
+
+function getAllFoldersOfUser(email, additionalOptions) {
+  var ts = tokenService(email);
   LibDrive.Init(ts);
-  var dSA = LibDrive.ServiceAccount(GMEA);
-  return dSA.getFoldersAndFilesInFolder(subFolderId); 
+  var dSA = LibDrive.ServiceAccount(email);
+  return dSA.getAllFolders(additionalOptions);
 }
-function StealOwnerShip_SubFolderSlave1(ownerEmail, fileId) {
-  var ts = tokenService(ownerEmail);
+ 
+function GetFilesAndFolders(email, additionalOptions) {
+  var ts = tokenService(email);
   LibDrive.Init(ts);
-  var dSA = LibDrive.ServiceAccount(ownerEmail);
-  return dSA.transferFileToUser(fileId, "drive.service@appsdemo.se");
+  var dSA = LibDrive.ServiceAccount(email);
+  return dSA.getFoldersAndFilesInFolder(additionalOptions);
 }
-// ***** Transfer Subfolder Files Ownership ***** \\
-// ***** Transfer Subfolder Files Ownership ***** \\
-// ***** Transfer Subfolder Files Ownership ***** \\
+
+
+function checkToken(){
+  var ts = tokenService("tshilumba.tapila@boulebar.se")
+  LibDrive.Init(ts);
+  Logger.log(LibDrive.checkToken());
+}
 
 
 
-
-
-
-// ***** Get Active User Token ***** \\
-// ***** Get Active User Token ***** \\
-// ***** Get Active User Token ***** \\
+// If userEmail is null the service account's token is returned   
 function tokenService(userEmail){
   var userEmail = userEmail || ""
   var jsonKey = JSON.parse(PropertiesService.getScriptProperties().getProperty("jsonKey"));  
@@ -215,6 +176,3 @@ function tokenService(userEmail){
     return tokenObj.token;
   }
 }
-// ***** Get Active User Token ***** \\
-// ***** Get Active User Token ***** \\
-// ***** Get Active User Token ***** \\
