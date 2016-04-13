@@ -15,51 +15,7 @@
 //admin.fileshare@piedtancagroup.com
 //0B2XfBTL5aSGMRnRZeUFpNV8tU0U
 // test folder: 0B2XfBTL5aSGMZTNwTDlwT2JqNjg
-/*
-function trigger_GetDriveFiles(){
-var folder = DriveApp.getFolderById("0B2XfBTL5aSGMZTNwTDlwT2JqNjg");
-var filesJSObj = GetDriveFiles(folder);
-  
-  
-   for(var ownerEmail in filesJSObj){
-    if(filesJSObj.hasOwnProperty(ownerEmail)){
-    Logger.log(bulkFile(ownerEmail, filesJSObj[ownerEmail]));
-    } 
-  }
-}
 
-function GetDriveFiles(folder) {
-  var files = {};
-  var files2 = {}; 
-  var fileIt = folder.getFiles();
-  while (fileIt.hasNext()) {
-    var f = fileIt.next();
-    var owner = f.getOwner().getEmail();
-    var id = f.getId();
-    
-    if (owner != "admin.fileshare@piedtancagroup.com"){
-      if (!files[owner]) {
-        files[owner] = [];
-      }
-      
-      // push the file to the owner's array
-      files[owner].push(id);
-    }
-    
-  }
-
-  // Get all the sub-folders and iterate
-  var folderIt = folder.getFolders();
-  while(folderIt.hasNext()) {
-    fs = GetDriveFiles(folderIt.next());
-    for (var i = 0; i < fs.length; i++) {
-      files[owner].push(id); 
-    }
-  }
-
-  return files;
-}
-*/
 
 function trigger_GetDriveFiles() {
   var folder = DriveApp.getFolderById('0B2XfBTL5aSGMZTNwTDlwT2JqNjg');
